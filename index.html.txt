@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stein-Wrestling | Championship Edition</title>
+    <!-- Google Fonts für den fetten Gaming- & Clean-Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #060608;
+            --bg-panel: rgba(20, 20, 25, 0.75);
+            --bg-input: #121216;
+            --text-main: #ffffff;
+            --text-muted: #8e8e9f;
+            --accent-orange: #ff5500;
+            --glow-strength: 20px;
+            --border-radius: 12px;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --font-gaming: 'Orbitron', sans-serif;
+            --font-clean: 'Inter', sans-serif;
+        }
+
+        /* Light Mode Overrides */
+        body.light-theme {
+            --bg-dark: #f0f2f5;
+            --bg-panel: rgba(255, 255, 255, 0.85);
+            --bg-input: #ffffff;
+            --text-main: #121216;
+            --text-muted: #65676b;
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-clean);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% -20%, rgba(255, 85, 0, 0.15) 0%, var(--bg-dark) 70%);
+        }
+
+        body.light-theme {
+            background-image: radial-gradient(circle at 50% -20%, #ffeae0 0%, var(--bg-dark) 70%);
+        }
+
+        h1, h2, h3, th, .role-title, .nav-left h2, .start-title, .locked-title, .nav-link, #nav-username, .rank-badge {
+            font-family: var(--font-gaming);
+            letter-spacing: 1px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- START SCREEN --- */
+        #view-startscreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #040406;
+            background-image: radial-gradient(circle at 50% 50%, rgba(255, 85, 0, 0.25) 0%, #050507 80%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+        }
+        .start-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff5500, #ff0055);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(255, 85, 0, 0.5);
+            margin-bottom: 1rem;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .start-subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 4rem; letter-spacing: 4px; font-weight: 600; }
+        .start-prompt {
+            font-family: var(--font-gaming); font-size: 1.3rem; font-weight: 700; color: #ffffff; letter-spacing: 2px;
+            animation: pulseGlow 1.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            from { text-shadow: 0 0 5px rgba(255,255,255,0.2); opacity: 0.3; transform: scale(0.98); }
+            to { text-shadow: 0 0 25px var(--accent-orange), 0 0 10px var(--accent-orange); opacity: 1; transform: scale(1.02); }
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem;
+            background: rgba(10, 10, 12, 0.4); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+        }
+        body.light-theme nav { background: rgba(255, 255, 255, 0.4); }
+        .nav-left { display: flex; align-items: center; gap: 2rem; }
+        .nav-left h2 {
+            font-weight: 900; background: linear-gradient(45deg, #ff5500, #ff0055);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(255, 85, 0, 0.4);
+            margin-right: 1rem;
+        }
+        .nav-link { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.95rem; font-weight: 700; padding: 5px 0; text-transform: uppercase; }
+        .nav-link.active { color: var(--text-main); border-bottom: 2px solid var(--accent-orange); text-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.5); }
+        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        #nav-username { font-weight: 700; border-right: 1px solid var(--border-color); padding-right: 1.5rem; color: var(--text-main); font-size: 0.95rem; text-transform: uppercase; }
+        
+        .icon-btn { 
+            background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            color: var(--text-muted); padding: 4px;
+        }
+        .icon-btn:hover { transform: scale(1.1); color: var(--text-main); }
+
+        /* Panels */
+        .panel { background: var(--bg-panel); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: var(--border-radius); }
+
+        /* Auth Views */
+        .auth-container { max-width: 420px; margin: 12vh auto; text-align: center; padding: 2.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .auth-container h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; text-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.4); }
+        .auth-container p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+        .input-group { text-align: left; margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.6rem; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px; background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--border-radius); color: var(--text-main); outline: none; font-size: 1rem; }
+        .input-group input:focus { border-color: var(--accent-orange); box-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.2); }
+
+        .btn-primary {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent-orange), #ff2200);
+            color: white; border: none; border-radius: var(--border-radius); font-weight: 700; cursor: pointer; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 85, 0, 0.4); font-family: var(--font-gaming);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 var(--glow-strength) var(--accent-orange); }
+        .btn-danger { background: linear-gradient(135deg, #ff3333, #bb0000); box-shadow: 0 4px 15px rgba(255, 51, 51, 0.4); }
+        .btn-danger:hover { box-shadow: 0 0 var(--glow-strength) #ff3333; }
+        .switch-auth { margin-top: 1.5rem; font-size: 0.9rem; }
+        .switch-auth a { color: var(--accent-orange); text-decoration: none; font-weight: 600; }
+
+        /* Roster Grid & Dashboard Headers */
+        .dashboard-header { text-align: center; padding: 4rem 1rem 2rem 1rem; }
+        .dashboard-header h1 { font-size: 2.8rem; font-weight: 900; }
+        .dashboard-header p { color: var(--text-muted); margin: 0.8rem 0 2.5rem 0; font-size: 1.1rem; }
+        
+        /* Suchleisten-Design */
+        .search-wrapper {
+            position: relative;
+            width: 350px;
+            margin: 0 auto;
+        }
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        #search-roles {
+            padding: 14px 25px 14px 50px;
+            width: 100%;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            outline: none;
+            font-size: 1rem;
+        }
+        #search-roles:focus { border-color: var(--accent-orange); box-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.2); }
+        #search-roles:focus + .search-icon { color: var(--accent-orange); }
+
+        .roles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .role-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem; cursor: pointer; position: relative; overflow: hidden; }
+        .role-card:hover { transform: translateY(-5px); border-color: var(--card-color); box-shadow: 0 0 var(--glow-strength) var(--card-color); }
+        .role-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--card-color, #fff); box-shadow: 0 2px 10px var(--card-color); }
+        
+        /* Layout Anpassungen für Vektor Icons */
+        .role-card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 1.2rem; }
+        .role-card-icon { 
+            width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; 
+            background: rgba(255,255,255,0.04); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.4); color: var(--card-color);
+        }
+        .role-card-icon svg { width: 22px; height: 22px; display: block; }
+        body.light-theme .role-card-icon { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08); }
+        
+        .role-card h3 { font-size: 1.2rem; font-weight: 800; }
+        .role-card .info-text { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .role-card.is-locked h3 { opacity: 0.4; letter-spacing: 2px; }
+        .role-card.is-locked .info-text { color: #ff3333; font-family: var(--font-gaming); }
+
+        /* Flex Alignment für Titelüberschriften mit integrierten Icons */
+        .role-title, #locked-char-name, #leaderboard-score-header-content {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 14px;
+        }
+        .role-title svg, #locked-char-name svg { width: 44px; height: 44px; flex-shrink: 0; }
+
+        /* --- LEADERBOARD DESIGNS --- */
+        .leaderboard-container { max-width: 850px; margin: 0 auto 4rem auto; padding: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        .leaderboard-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .leaderboard-table th { padding: 15px; border-bottom: 2px solid var(--accent-orange); color: var(--text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; }
+        .leaderboard-table td { padding: 18px 15px; border-bottom: 1px solid var(--border-color); font-size: 1.05rem; font-weight: 600; vertical-align: middle; }
+        .leaderboard-table tr:last-child td { border-bottom: none; }
+        .leaderboard-table tr:hover td { background: rgba(255,255,255,0.02); }
+        body.light-theme .leaderboard-table tr:hover td { background: rgba(0,0,0,0.02); }
+        
+        .rank-badge { display: inline-block; width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 50%; font-weight: 900; font-size: 0.9rem; }
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #060608; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+        .rank-2 { background: linear-gradient(135deg, #e0e0e0, #a0a0a0); color: #060608; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #995522); color: #060608; }
+        .rank-other { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border-color); }
+
+        /* Stylischer Dropdown Selector für Leaderboard Tabs */
+        .leaderboard-selector-wrapper { display: flex; justify-content: center; margin-bottom: 2rem; }
+        .leaderboard-select {
+            padding: 12px 24px; background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);
+            border-radius: 30px; font-family: var(--font-gaming); font-weight: 700; font-size: 0.95rem; outline: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .leaderboard-select:focus { border-color: var(--accent-orange); box-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.2); }
+
+        /* Mastery View */
+        .btn-secondary { background: none; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 20px; color: var(--text-muted); cursor: pointer; margin: 2rem; font-weight: 600; font-family: var(--font-gaming); font-size: 0.8rem; }
+        .btn-secondary:hover { color: var(--text-main); border-color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .mastery-container { max-width: 750px; margin: 0 auto; padding: 0 2rem 4rem 2rem; }
+        .role-title { font-size: 3.5rem; font-weight: 900; text-transform: uppercase; color: var(--mastery-color, white); text-shadow: 0 0 var(--glow-strength) var(--mastery-color); margin-bottom: 0.5rem; }
+        #mastery-desc { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.1rem; line-height: 1.6; }
+        .mastery-box { padding: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .mastery-box h3 { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
+        .task-text { margin-bottom: 2rem; font-size: 1.4rem; font-weight: 700; }
+        .progress-bar-container { width: 100%; height: 12px; background-color: rgba(0,0,0,0.2); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--mastery-color), #ffffff); box-shadow: 0 0 var(--glow-strength) var(--mastery-color); width: 0%; }
+        .add-progress-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+
+        /* LOCKED SCREEN */
+        .locked-container { max-width: 600px; margin: 4vh auto; padding: 3.5rem; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.4); position: relative; }
+        .lock-icon-massive { margin-bottom: 1.5rem; animation: lockPulse 2s infinite alternate ease-in-out; display: flex; justify-content: center; }
+        .locked-title { font-size: 2.2rem; font-weight: 900; color: #ff3333; text-shadow: 0 0 20px rgba(255, 51, 51, 0.4); margin-bottom: 0.5rem; }
+        #locked-char-name { font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: 3px; margin-bottom: 2rem; text-transform: uppercase; }
+        .lock-condition-box { background: rgba(255, 51, 51, 0.05); border: 1px dashed #ff3333; padding: 1.8rem; border-radius: var(--border-radius); text-align: left; }
+        .lock-condition-box h4 { font-family: var(--font-gaming); font-size: 0.85rem; color: #ff3333; letter-spacing: 1px; margin-bottom: 0.6rem; }
+        #locked-condition-text { color: var(--text-main); font-size: 1.05rem; line-height: 1.5; font-weight: 600; }
+
+        @keyframes lockPulse {
+            from { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255,51,51,0.4)); }
+            to { transform: scale(1.08); filter: drop-shadow(0 0 25px #ff3333); }
+        }
+
+        /* Settings View */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 900px; margin: 2rem auto; padding: 0 2rem; }
+        .settings-box panel { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .settings-box h2 { font-size: 1.3rem; font-weight: 800; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; margin-bottom: 0.5rem; }
+        .setting-item { display: flex; flex-direction: column; gap: 0.5rem; }
+        .setting-item span { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        .theme-toggle-btn {
+            background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: var(--border-radius);
+            cursor: pointer; font-weight: 700; font-size: 1rem; width: 100%; display: flex; justify-content: center; align-items: center; font-family: var(--font-gaming);
+        }
+        .theme-toggle-btn:hover { border-color: var(--accent-orange); box-shadow: 0 0 var(--glow-strength) rgba(255, 85, 0, 0.2); }
+
+        /* Custom Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 4, 6, 0.85); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; animation: fadeIn 0.2s ease forwards;
+        }
+        .modal-box { width: 90%; max-width: 450px; padding: 2.5rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: slideUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .modal-box h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 1rem; letter-spacing: 1px; }
+        .modal-box p { color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+        .modal-buttons button { flex: 1; padding: 12px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        input[type=range] { width: 100%; accent-color: var(--accent-orange); background: #111; height: 6px; border-radius: 3px; cursor: pointer; }
+
+        /* Admin Styles */
+        .admin-badge {
+            color: #b055ff; font-weight: 900; font-family: var(--font-gaming); font-size: 0.8rem; margin-left: 10px;
+            text-shadow: 0 0 10px rgba(176, 85, 255, 0.4); letter-spacing: 1px;
+        }
+        .admin-remove-btn {
+            background: linear-gradient(135deg, #ff3333, #bb0000); color: white; border: none; padding: 4px 10px; font-size: 0.75rem;
+            font-family: var(--font-gaming); font-weight: 700; border-radius: 4px; cursor: pointer; margin-left: 15px; display: inline-flex; align-items: center; box-shadow: 0 2px 8px rgba(255, 51, 51, 0.3);
+        }
+        .admin-remove-btn:hover { transform: scale(1.05); box-shadow: 0 0 10px #ff3333; }
+        
+        .admin-ban-btn {
+            background: linear-gradient(135deg, #2ea44f, #1f7a3a); color: white; border: none; padding: 4px 10px; font-size: 0.75rem;
+            font-family: var(--font-gaming); font-weight: 700; border-radius: 4px; cursor: pointer; margin-left: 8px; display: inline-flex; align-items: center; box-shadow: 0 2px 8px rgba(46, 164, 79, 0.3);
+        }
+        .admin-ban-btn:hover { transform: scale(1.05); box-shadow: 0 0 10px #2ea44f; }
+
+        /* Inline-Rank Badge Styling */
+        .player-rank-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-family: var(--font-gaming);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+        body.light-theme .player-rank-tag { background: rgba(0, 0, 0, 0.04); }
+    </style>
+</head>
+<body>
+
+    <!-- START SCREEN -->
+    <div id="view-startscreen">
+        <h1 class="start-title">Stein-Wrestling</h1>
+        <p class="start-subtitle">ROSTER & MASTERY TRACKER</p>
+        <p class="start-prompt">KLICKE ZUM STARTEN</p>
+    </div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="hidden">
+        <div class="nav-left">
+            <h2>Stein-Wrestling</h2>
+            <button id="nav-roles-btn" class="nav-link active">Rollen</button>
+            <button id="nav-leaderboard-btn" class="nav-link">Leaderboard</button>
+        </div>
+        <div class="nav-right">
+            <span id="nav-username">User</span>
+            <button id="nav-settings-btn" class="icon-btn" title="Einstellungen">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button id="nav-logout-btn" class="icon-btn" title="Ausloggen">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Login View -->
+        <section id="view-login" class="view hidden">
+            <div class="auth-container panel">
+                <h1>ANMELDEN</h1>
+                <p>Tritt ein in die Stein-Wrestling Arena.</p>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label>BENUTZERNAME</label>
+                        <input type="text" id="login-user" placeholder="Dein Roster-Name..." required>
+                    </div>
+                    <div class="input-group">
+                        <label>PASSWORT</label>
+                        <input type="password" id="login-pass" placeholder="••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary">ANMELDEN</button>
+                </form>
+                <p class="switch-auth">Neu hier? <a href="#" id="go-to-register">Account erstellen</a></p>
+            </div>
+        </section>
+
+        <!-- Register View -->
+        <section id="view-register" class="view hidden">
+            <div class="auth-container panel">
+                <h1>REGISTRIEREN</h1>
+                <p>Erstelle ein Profil für dein Roster-Tracking.</p>
+                <form id="register-form">
+                    <div class="input-group">
+                        <label>BENUTZERNAME</label>
+                        <input type="text" id="reg-user" placeholder="Wähle einen Namen..." required>
+                    </div>
+                    <div class="input-group">
+                        <label>PASSWORT</label>
+                        <input type="password" id="reg-pass" placeholder="Sicheres Passwort..." required>
+                    </div>
+                    <button type="submit" class="btn-primary">REGISTRIEREN</button>
+                </form>
+                <p class="switch-auth">Bereits registriert? <a href="#" id="go-to-login">Hier einloggen</a></p>
+            </div>
+        </section>
+
+        <!-- Roles View -->
+        <section id="view-roles" class="view hidden">
+            <div class="dashboard-header">
+                <h1>CHARAKTERAUSWAHL</h1>
+                <p>Verwalte deine gelernten Rollen und grinde deine Mastery bis auf das Ultimate-Limit von 10.000!</p>
+                
+                <div class="search-wrapper">
+                    <input type="text" id="search-roles" placeholder="Rolle suchen...">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+            <div class="roles-grid" id="roles-container"></div>
+        </section>
+
+        <!-- Leaderboard View -->
+        <section id="view-leaderboard" class="view hidden">
+            <div class="dashboard-header">
+                <h1>GLOBALES LEADERBOARD</h1>
+                <p>Die Elite aller Arenen. Wechsle den Tab, um die Ranglisten und Ränge einzelner Charaktere anzusehen!</p>
+                
+                <!-- Tab/Dropdown-Auswahl -->
+                <div class="leaderboard-selector-wrapper">
+                    <select id="leaderboard-type-select" class="leaderboard-select">
+                        <option value="global">GLOBAL (GESAMT)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="leaderboard-container panel">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Rang</th>
+                            <th>Spieler</th>
+                            <th id="leaderboard-score-header" style="text-align: right;">Gesamt-Mastery</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-rows"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Mastery View -->
+        <section id="view-mastery" class="view hidden">
+            <button id="back-to-roles" class="btn-secondary">← ZURÜCK</button>
+            <div class="mastery-container">
+                <h1 id="mastery-title" class="role-title">Role Name</h1>
+                <p id="mastery-desc">Description</p>
+
+                <div class="mastery-box panel">
+                    <!-- Standard Mastery Content -->
+                    <div id="mastery-standard-content">
+                        <h3>AKTUELLE MISSION</h3>
+                        <p id="mastery-task" class="task-text">Task description</p>
+                        
+                        <div class="progress-info" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                            <span id="mastery-percent" style="font-weight:800;">0%</span>
+                            <span id="mastery-numbers">0 / 10000</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="mastery-bar" class="progress-bar"></div>
+                        </div>
+
+                        <div class="add-progress-section">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                                <label style="font-weight:700; font-size:0.8rem; color:var(--text-muted);">FORTSCHRITT HINZUFÜGEN</label>
+                                <div class="slider-val-display" id="mastery-slider-val" style="font-weight:900; font-size:1.4rem; color:var(--mastery-color);">+0</div>
+                            </div>
+                            <input type="range" id="mastery-slider" min="0" max="10000" value="0" style="margin-bottom:1.5rem;">
+                            <button id="btn-submit-mastery" class="btn-primary">EINTRAGEN</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LOCKED SCREEN VIEW -->
+        <section id="view-locked" class="view hidden">
+            <button id="back-from-locked" class="btn-secondary">← ZURÜCK ZUR AUSWAHL</button>
+            <div class="locked-container panel">
+                <div class="lock-icon-massive">
+                    <svg width="75" height="75" viewBox="0 0 24 24" fill="none" stroke="#ff3333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+                <h2 class="locked-title">ZUGRIFF VERWEIGERT</h2>
+                <div id="locked-char-name">Kämpfername</div>
+                
+                <div class="lock-condition-box">
+                    <h4>FREISCHALTBEDINGUNG:</h4>
+                    <p id="locked-condition-text">Bedingung</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings View -->
+        <section id="view-settings" class="view hidden">
+            <button id="back-from-settings" class="btn-secondary">← ZURÜCK ZU DEN ROLLEN</button>
+            <h1 style="text-align:center; font-size:2.5rem; font-weight:900; margin-top:1rem; font-family: var(--font-gaming);">EINSTELLUNGEN</h1>
+            
+            <div class="settings-grid">
+                <div class="settings-box panel">
+                    <h2>Account Einstellungen</h2>
+                    
+                    <form id="change-username-form" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
+                        <div class="setting-item">
+                            <span>ROSTER-NAMEN ÄNDERN</span>
+                            <input type="text" id="settings-new-username" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);" placeholder="Neuen Namen eingeben..." required>
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top:0.8rem; padding:10px;">Name aktualisieren</button>
+                    </form>
+
+                    <form id="change-pass-form">
+                        <div class="setting-item">
+                            <span>AKTUELLES PASSWORT</span>
+                            <input type="password" id="settings-curr-pass" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);" placeholder="Aktuelles Passwort verifizieren..." required>
+                        </div>
+                        <div class="setting-item" style="margin-top:0.8rem;">
+                            <span>NEUES PASSWORT</span>
+                            <input type="password" id="settings-new-pass" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main);" placeholder="Neues Passwort..." required>
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top:1.2rem; padding:10px;">Passwort aktualisieren</button>
+                    </form>
+                    <div style="margin-top:auto; border-top:1px solid var(--border-color); padding-top:1.5rem;">
+                        <button id="btn-delete-acc" class="btn-primary btn-danger" style="padding:10px;">Account unwiderruflich löschen</button>
+                    </div>
+                </div>
+
+                <div class="settings-box panel">
+                    <h2>Allgemeine Einstellungen</h2>
+                    <div class="setting-item">
+                        <span>FARBDESIGN</span>
+                        <button id="theme-toggle" class="theme-toggle-btn">Dark Mode</button>
+                    </div>
+                    <div class="setting-item" style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1.5rem;">
+                        <span>DATENBEREINIGUNG</span>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Setzt alle Masteries des aktuellen Accounts auf 0 zurück.</p>
+                        <button id="btn-reset-progress" class="btn-primary btn-danger" style="padding:10px; background:linear-gradient(135deg, #ff7700, #ff3300)">Fortschritt zurücksetzen</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-box panel">
+            <h2 id="modal-title">Systemmeldung</h2>
+            <p id="modal-message">Inhalt der Meldung...</p>
+            <div id="modal-prompt-area" class="input-group hidden">
+                <label id="modal-prompt-label">PASSWORT EINGEBEN</label>
+                <input type="password" id="modal-prompt-input">
+            </div>
+            <div class="modal-buttons">
+                <button id="modal-btn-cancel" class="btn-secondary" style="margin:0;">Abbrechen</button>
+                <button id="modal-btn-confirm" class="btn-primary">Bestätigen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // RÄNKE-SYSTEM IM VECTOR LOOK
+        const rankDefinitions = [
+            { id: 'alien', name: 'Alien', minPct: 95, color: '#00ffcc', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8v4a4 4 0 0 0 2 3.46V20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2.54a4 4 0 0 0 2-3.46v-4a8 8 0 0 0-8-8z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>` },
+            { id: 'legend', name: 'Legend', minPct: 80, color: '#ff0055', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>` },
+            { id: 'god', name: 'God', minPct: 65, color: '#b055ff', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>` },
+            { id: 'pro', name: 'Pro', minPct: 45, color: '#ff5500', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>` },
+            { id: 'gold', name: 'Gold', minPct: 25, color: '#ffd700', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` },
+            { id: 'silber', name: 'Silber', minPct: 10, color: '#c0c0c0', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/></svg>` },
+            { id: 'bronze', name: 'Bronze', minPct: 0, color: '#cd7f32', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>` }
+        ];
+
+        function getRank(score, maxLimit = 10000) {
+            const pct = (score / maxLimit) * 100;
+            return rankDefinitions.find(r => pct >= r.minPct) || rankDefinitions[rankDefinitions.length - 1];
+        }
+
+        const rolesData = [
+            { id: 'ability-stealer', name: 'Ability Stealer', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 10h.01M15 10h.01M10 14.5a3 3 0 0 0 4 0"/></svg>`, color: '#ff4d4d', max: 10000, task: 'Stehle bis zu 10.000 Abilities', desc: 'Nimmt, was nicht ihm gehört. Deine Kraft ist jetzt seine Kraft.' },
+            { id: 'clockman', name: 'ClockMan', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`, color: '#ffb84d', max: 10000, task: 'Halte die Zeit bis zu 10.000 mal an', desc: 'Zeit ist seine Waffe. Kontrolliert den Verlauf der Schlacht.' },
+            { id: 'doublelife', name: 'DoubleLife', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`, color: '#c266ff', max: 10000, task: 'Stirb bis zu 10.000 mal', desc: 'Lebt zweimal, stirbt einmal. Meister der zweiten Chancen.' },
+            { id: 'iceman', name: 'IceMan', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/><path d="M10 4l2 2 2-2M10 20l2-2 2 2M20 10l-2 2 2 2M4 10l2 2-2 2"/></svg>`, color: '#4dd2ff', max: 10000, task: 'Gehe bis zu 10.000 mal in die Sonne', desc: 'Kalt wie der Nordwind.' },
+            { id: 'ninja', name: 'Ninja', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h.01M18 12h.01M10 12l2-2 2 2"/></svg>`, color: '#33cc80', max: 10000, task: 'Tp dich bis zu 10.000 mal zum Home', desc: 'Schatten aus Fleisch.' },
+            { id: 'useless-tapper', name: 'Useless Tapper', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 3v9M6 12h12"/></svg>`, color: '#ff88cc', max: 10000, task: 'Tappe bis zu 10.000 mal (Erreiche 666 für Tapper)', desc: 'Aller Anfang ist schwer. Klicke dich nach oben!' },
+            { id: 'tapper', name: 'Tapper', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 11V6a2 2 0 0 1 4 0v5M14 11V8a2 2 0 0 1 4 0v3M18 11v1a4 4 0 0 1-4 4h-3a5 5 0 0 1-5-5v-1a2 2 0 0 1 4 0v1M6 12V4a2 2 0 0 1 4 0v8"/></svg>`, color: '#ff2255', max: 10000, unlockCond: 'Schalte zuerst die Mastery von Useless Tapper auf mindestens 666 Taps frei.', task: 'Tappe bis zu 10.000 mal (Erreiche 666 für _.?101)', desc: 'Schnelle Finger. Brutale Klicks.' },
+            { id: 'pet', name: 'Pet', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="14" r="4"/><circle cx="6.5" cy="9.5" r="1.5"/><circle cx="10" cy="5.5" r="1.5"/><circle cx="14" cy="5.5" r="1.5"/><circle cx="17.5" cy="9.5" r="1.5"/></svg>`, color: '#bbff33', max: 10000, task: 'Lass dich bis zu 10.000 mal platzieren', desc: 'Ein treuer Begleiter, der dir im Kampf den Rücken freihält.' },
+            { id: 'secret-101', name: '_.?101', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8v4a4 4 0 0 0 2 3.46V20a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2.54a4 4 0 0 0 2-3.46v-4a8 8 0 0 0-8-8z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="M11 16h2M10 20h4"/></svg>`, color: '#00ffcc', max: 10000, unlockCond: 'Um _.?101 freizuschalten, musst du die Mastery von Tapper auf mindestens 666 Taps bringen.', task: 'Meistere das Unbekannte bis zum Limit.', desc: 'Kritischer Fehler im Mainframe. Instabil, unberechenbar und absolut tödlich.' }
+        ];
+
+        let dbUsers = JSON.parse(localStorage.getItem('steinUsers')) || {};
+        if (Object.keys(dbUsers).length === 0) {
+            dbUsers = {
+                "Deluxecash": { password: "admin", progress: { "ability-stealer": 900, "clockman": 2500, "useless-tapper": 666, "tapper": 1300 } },
+                "WrestlingGott": { password: "123", progress: { "ability-stealer": 5500, "clockman": 9600, "doublelife": 2200, "iceman": 1110, "ninja": 1120, "useless-tapper": 8000, "tapper": 9900, "secret-101": 500 } },
+                "StoneCold99": { password: "123", progress: { "useless-tapper": 666, "tapper": 450, "pet": 1200 } }
+            };
+            localStorage.setItem('steinUsers', JSON.stringify(dbUsers));
+        }
+
+        let currentUser = null;
+        let currentRoleView = null;
+
+        const views = {
+            login: document.getElementById('view-login'),
+            register: document.getElementById('view-register'),
+            roles: document.getElementById('view-roles'),
+            leaderboard: document.getElementById('view-leaderboard'),
+            mastery: document.getElementById('view-mastery'),
+            locked: document.getElementById('view-locked'),
+            settings: document.getElementById('view-settings')
+        };
+
+        function init() {
+            const savedTheme = localStorage.getItem('siteTheme') || 'dark';
+            setTheme(savedTheme);
+            buildLeaderboardDropdown();
+        }
+
+        function buildLeaderboardDropdown() {
+            const select = document.getElementById('leaderboard-type-select');
+            select.innerHTML = '<option value="global">GLOBAL (GESAMT)</option>';
+            rolesData.forEach(role => {
+                const opt = document.createElement('option');
+                opt.value = role.id;
+                opt.textContent = role.name.toUpperCase();
+                select.appendChild(opt);
+            });
+        }
+
+        document.getElementById('view-startscreen').addEventListener('click', () => {
+            document.getElementById('view-startscreen').classList.add('hidden');
+            const savedUser = localStorage.getItem('steinUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                if (!currentUser.progress) currentUser.progress = {};
+                showView('roles');
+                renderRoles();
+                document.getElementById('nav-username').textContent = currentUser.username;
+                document.getElementById('navbar').classList.remove('hidden');
+            } else {
+                showView('login');
+            }
+        });
+
+        function isRoleLocked(roleId) {
+            if (!currentUser || !currentUser.progress) return false;
+            if (roleId === 'tapper') {
+                const uselessProg = Number(currentUser.progress['useless-tapper']) || 0;
+                return uselessProg < 666; 
+            }
+            if (roleId === 'secret-101') {
+                const tapperProg = Number(currentUser.progress['tapper']) || 0;
+                return tapperProg < 666;
+            }
+            return false;
+        }
+
+        function openPopup({ title, message, type = 'alert', label = 'PASSWORT BESTÄTIGEN' }) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-message').textContent = message;
+                
+                const promptArea = document.getElementById('modal-prompt-area');
+                const promptInput = document.getElementById('modal-prompt-input');
+                document.getElementById('modal-prompt-label').textContent = label;
+                promptInput.value = '';
+
+                const cancelBtn = document.getElementById('modal-btn-cancel');
+                const confirmBtn = document.getElementById('modal-btn-confirm');
+
+                if (type === 'alert') {
+                    cancelBtn.classList.add('hidden');
+                    promptArea.classList.add('hidden');
+                } else if (type === 'confirm') {
+                    cancelBtn.classList.remove('hidden');
+                    promptArea.classList.add('hidden');
+                } else if (type === 'promptPassword') {
+                    cancelBtn.classList.remove('hidden');
+                    promptArea.classList.remove('hidden');
+                }
+
+                modal.classList.remove('hidden');
+
+                confirmBtn.onclick = () => { modal.classList.add('hidden'); resolve({ success: true, value: promptInput.value }); };
+                cancelBtn.onclick = () => { modal.classList.add('hidden'); resolve({ success: false, value: null }); };
+            });
+        }
+
+        function showView(viewName) {
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+            document.getElementById('nav-roles-btn').classList.toggle('active', viewName === 'roles');
+            document.getElementById('nav-leaderboard-btn').classList.toggle('active', viewName === 'leaderboard');
+        }
+
+        function setTheme(theme) {
+            const btn = document.getElementById('theme-toggle');
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+                btn.textContent = "☀️ Light Mode";
+                localStorage.setItem('siteTheme', 'light');
+            } else {
+                document.body.classList.remove('light-theme');
+                btn.textContent = "🌙 Dark Mode";
+                localStorage.setItem('siteTheme', 'dark');
+            }
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            setTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light');
+        });
+
+        document.getElementById('go-to-register').addEventListener('click', () => showView('register'));
+        document.getElementById('go-to-login').addEventListener('click', () => showView('login'));
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('reg-user').value.trim();
+            const pass = document.getElementById('reg-pass').value;
+            let users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+            if(users[user]) { await openPopup({ title: 'Fehler', message: 'Name vergeben!' }); return; }
+            users[user] = { password: pass, progress: {} };
+            localStorage.setItem('steinUsers', JSON.stringify(users));
+            await openPopup({ title: 'Erfolg', message: 'Profil erstellt!' });
+            showView('login');
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            let users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+            if(users[user] && users[user].password === pass) {
+                currentUser = { username: user, progress: users[user].progress || {} };
+                localStorage.setItem('steinUser', JSON.stringify(currentUser));
+                document.getElementById('nav-username').textContent = user;
+                document.getElementById('navbar').classList.remove('hidden');
+                showView('roles');
+                renderRoles();
+            } else {
+                await openPopup({ title: 'Zutritt verweigert', message: 'Falsche Daten!' });
+            }
+        });
+
+        document.getElementById('nav-logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('steinUser');
+            currentUser = null;
+            document.getElementById('navbar').classList.add('hidden');
+            showView('login');
+        });
+
+        document.getElementById('nav-roles-btn').addEventListener('click', () => { showView('roles'); renderRoles(); });
+        document.getElementById('nav-leaderboard-btn').addEventListener('click', () => { showView('leaderboard'); renderLeaderboard(); });
+        document.getElementById('nav-settings-btn').addEventListener('click', () => showView('settings'));
+        document.getElementById('back-from-settings').addEventListener('click', () => showView('roles'));
+        document.getElementById('back-to-roles').addEventListener('click', () => { showView('roles'); renderRoles(); });
+        document.getElementById('back-from-locked').addEventListener('click', () => { showView('roles'); renderRoles(); });
+
+        function renderRoles(filterText = "") {
+            const container = document.getElementById('roles-container');
+            container.innerHTML = '';
+            rolesData.forEach(role => {
+                if (!role.name.toLowerCase().includes(filterText.toLowerCase())) return;
+                const card = document.createElement('div');
+                card.style.setProperty('--card-color', role.color);
+                const locked = isRoleLocked(role.id);
+                
+                if (locked) {
+                    card.className = 'role-card is-locked';
+                    card.innerHTML = `
+                        <div class="role-card-header">
+                            <div class="role-card-icon" style="filter: grayscale(1); opacity: 0.3;">${role.icon}</div>
+                            <h3>${role.name}</h3>
+                        </div>
+                        <div class="info-text"><span>GESPERRT</span></div>`;
+                    card.addEventListener('click', () => openLockedScreen(role));
+                } else {
+                    card.className = 'role-card';
+                    let prog = currentUser.progress[role.id] || 0;
+                    let perc = Math.min(100, Math.round((prog / role.max) * 100));
+                    const currentRank = getRank(prog, role.max);
+
+                    card.innerHTML = `
+                        <div class="role-card-header">
+                            <div class="role-card-icon" style="box-shadow: 0 0 10px ${role.color}; border-color:${role.color}; color:${role.color}">${role.icon}</div>
+                            <h3>${role.name}</h3>
+                        </div>
+                        <div class="info-text">
+                            <span style="display:flex; align-items:center; gap:4px; color:${currentRank.color}">
+                                ${currentRank.icon} ${currentRank.name.toUpperCase()} (${perc}%)
+                            </span>
+                            <span>➔</span>
+                        </div>`;
+                    card.addEventListener('click', () => openMastery(role));
+                }
+                container.appendChild(card);
+            });
+        }
+        document.getElementById('search-roles').addEventListener('input', (e) => renderRoles(e.target.value));
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboard-rows');
+            tbody.innerHTML = '';
+            const users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+            const mode = document.getElementById('leaderboard-type-select').value;
+            const scoreHeader = document.getElementById('leaderboard-score-header');
+            let leaderboardData = [];
+
+            if (mode === 'global') {
+                scoreHeader.textContent = 'Gesamt-Mastery';
+                leaderboardData = Object.keys(users).map(username => {
+                    const progressObj = users[username].progress || {};
+                    let sumOfPercentages = 0;
+                    rolesData.forEach(role => {
+                        const prog = progressObj[role.id] || 0;
+                        sumOfPercentages += Math.min(100, (prog / role.max) * 100);
+                    });
+                    const totalPercent = Math.round(sumOfPercentages / rolesData.length);
+                    return { username, score: totalPercent, display: `${totalPercent}%`, maxLimit: 100 };
+                });
+            } else {
+                const activeRole = rolesData.find(r => r.id === mode);
+                scoreHeader.innerHTML = activeRole ? `<div id="leaderboard-score-header-content">${activeRole.icon} <span>${activeRole.name.toUpperCase()}</span></div>` : 'Fortschritt';
+                leaderboardData = Object.keys(users).map(username => {
+                    const progressObj = users[username].progress || {};
+                    const prog = progressObj[mode] || 0;
+                    const max = activeRole ? activeRole.max : 10000;
+                    return { username, score: prog, display: `${prog} / ${max}`, maxLimit: max };
+                });
+            }
+
+            leaderboardData.sort((a, b) => b.score - a.score);
+            const isCurrentUserAdmin = currentUser && currentUser.username === "Deluxecash";
+
+            leaderboardData.forEach((player, index) => {
+                const tr = document.createElement('tr');
+                const rank = index + 1;
+                let rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+                const playerRankInfo = getRank(player.score, player.maxLimit);
+
+                let adminActionButtons = '';
+                if (isCurrentUserAdmin && player.username !== "Deluxecash") {
+                    adminActionButtons = `
+                        <button class="admin-remove-btn" onclick="deleteUserProgress('${player.username}')">(entf.)</button>
+                        <button class="admin-ban-btn" onclick="banUserAccount('${player.username}')">(ban.)</button>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+                    <td>
+                        <span style="${player.username === currentUser.username ? 'color: var(--accent-orange); font-weight: 700;' : ''}">${player.username}</span>${player.username === "Deluxecash" ? '<span class="admin-badge">[ADMIN]</span>' : ''}
+                        <span class="player-rank-tag" style="color: ${playerRankInfo.color}; border: 1px solid ${playerRankInfo.color}44;">
+                            ${playerRankInfo.icon} ${playerRankInfo.name}
+                        </span>
+                        ${adminActionButtons}
+                    </td>
+                    <td style="text-align: right; font-family: var(--font-gaming); color: var(--accent-orange); font-weight: 700;">${player.display}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('leaderboard-type-select').addEventListener('change', renderLeaderboard);
+
+        window.deleteUserProgress = async function(targetUser) {
+            if((await openPopup({ title: 'ENTFERNEN?', message: `Fortschritt von ${targetUser} löschen?`, type: 'confirm' })).success) {
+                let users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+                if (users[targetUser]) { users[targetUser].progress = {}; localStorage.setItem('steinUsers', JSON.stringify(users)); renderLeaderboard(); }
+            }
+        };
+
+        window.banUserAccount = async function(targetUser) {
+            if((await openPopup({ title: 'BAN?', message: `Account von ${targetUser} löschen?`, type: 'confirm' })).success) {
+                let users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+                if (users[targetUser]) { delete users[targetUser]; localStorage.setItem('steinUsers', JSON.stringify(users)); renderLeaderboard(); }
+            }
+        };
+
+        function openLockedScreen(role) {
+            showView('locked');
+            document.getElementById('locked-char-name').innerHTML = `${role.icon} <span>${role.name}</span>`;
+            document.getElementById('locked-condition-text').textContent = role.unlockCond || "Gesperrt.";
+        }
+
+        function openMastery(role) {
+            currentRoleView = role;
+            showView('mastery');
+            document.getElementById('mastery-title').innerHTML = `${role.icon} <span>${role.name}</span>`;
+            document.getElementById('mastery-title').style.setProperty('--mastery-color', role.color);
+            document.documentElement.style.setProperty('--mastery-color', role.color);
+            document.getElementById('mastery-desc').textContent = role.desc;
+            document.getElementById('mastery-task').textContent = role.task;
+            
+            // HIER WAR DER FEHLER: classList korrigiert!
+            document.getElementById('mastery-standard-content').classList.remove('hidden');
+            updateMasteryUI();
+        }
+
+        function updateMasteryUI() {
+            let prog = currentUser.progress[currentRoleView.id] || 0;
+            const max = currentRoleView.max;
+            document.getElementById('mastery-numbers').textContent = `${prog} / ${max}`;
+            const perc = Math.min(100, Math.round((prog / max) * 100));
+            document.getElementById('mastery-bar').style.width = `${perc}%`;
+            document.getElementById('mastery-percent').textContent = `${perc}%`;
+            
+            const slider = document.getElementById('mastery-slider');
+            slider.max = max - prog; 
+            slider.value = 0;
+            document.getElementById('mastery-slider-val').textContent = '+0';
+        }
+        
+        document.getElementById('mastery-slider').addEventListener('input', (e) => {
+            document.getElementById('mastery-slider-val').textContent = `+${e.target.value}`;
+        });
+
+        document.getElementById('btn-submit-mastery').addEventListener('click', () => {
+            const val = parseInt(document.getElementById('mastery-slider').value);
+            if (val > 0) {
+                let currentProg = currentUser.progress[currentRoleView.id] || 0;
+                let newProg = Math.min(currentRoleView.max, currentProg + val);
+                currentUser.progress[currentRoleView.id] = newProg;
+                saveUserData();
+                updateMasteryUI();
+            }
+        });
+
+        function saveUserData() {
+            let users = JSON.parse(localStorage.getItem('steinUsers'));
+            users[currentUser.username].progress = currentUser.progress;
+            localStorage.setItem('steinUsers', JSON.stringify(users));
+            localStorage.setItem('steinUser', JSON.stringify(currentUser));
+        }
+
+        document.getElementById('change-username-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('settings-new-username').value.trim();
+            let users = JSON.parse(localStorage.getItem('steinUsers')) || {};
+            if (users[newName]) { await openPopup({ title: 'Fehler', message: 'Name vergeben!' }); return; }
+            users[newName] = users[currentUser.username];
+            delete users[currentUser.username];
+            currentUser.username = newName;
+            localStorage.setItem('steinUsers', JSON.stringify(users));
+            localStorage.setItem('steinUser', JSON.stringify(currentUser));
+            document.getElementById('nav-username').textContent = newName;
+            await openPopup({ title: 'Erfolg', message: 'Name geändert!' });
+        });
+
+        document.getElementById('change-pass-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currInput = document.getElementById('settings-curr-pass').value;
+            const newInput = document.getElementById('settings-new-pass').value;
+            let users = JSON.parse(localStorage.getItem('steinUsers'));
+            if (currInput !== users[currentUser.username].password) { await openPopup({ title: 'Fehler', message: 'Falsches Passwort!' }); return; }
+            users[currentUser.username].password = newInput;
+            localStorage.setItem('steinUsers', JSON.stringify(users));
+            await openPopup({ title: 'Erfolg', message: 'Passwort aktualisiert!' });
+        });
+
+        document.getElementById('btn-reset-progress').addEventListener('click', async () => {
+            if ((await openPopup({ title: 'Sicher?', message: 'Fortschritt nullen?', type: 'confirm' })).success) {
+                currentUser.progress = {}; saveUserData(); renderRoles(); showView('roles');
+            }
+        });
+
+        document.getElementById('btn-delete-acc').addEventListener('click', async () => {
+            const promptRes = await openPopup({ title: 'LÖSCHEN?', message: 'Gib dein Passwort ein.', type: 'promptPassword' });
+            if (promptRes.success) {
+                let users = JSON.parse(localStorage.getItem('steinUsers'));
+                if (promptRes.value === users[currentUser.username].password) {
+                    delete users[currentUser.username]; localStorage.setItem('steinUsers', JSON.stringify(users));
+                    localStorage.removeItem('steinUser'); currentUser = null;
+                    document.getElementById('navbar').classList.add('hidden'); showView('login');
+                }
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
